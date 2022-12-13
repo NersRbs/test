@@ -1,16 +1,13 @@
 #include <iostream>
 
-
 struct Node {
     int data;
-    int index;
     int height;
     Node *left;
     Node *right;
 
-    explicit Node(int data = 0) {
+    explicit Node(int data) {
         this->data = data;
-        index = 0;
         height = 1;
         left = nullptr;
         right = nullptr;
@@ -89,45 +86,37 @@ Node *insert(Node *node, int data) {
     return balance(node);
 }
 
-void set_index(Node *node, int &index) {
-    if (!node)
-        return;
-    node->index = index;
-    index++;
-    set_index(node->left, index);
-    set_index(node->right, index);
+Node *find_max(Node *node) {
+    return node->right? find_max(node->right): node;
 }
 
-void set_height(Node *node) {
-    if (node->left != nullptr && node->right != nullptr) {
-        set_height(node->left);
-        set_height(node->right);
-        node->height = std::max(node->left->height, node->right->height) + 1;
-    } else {
-        if (node->left != nullptr) {
-            set_height(node->left);
-            node->height = node->left->height + 1;
-        } else if (node->right != nullptr) {
-            set_height(node->right);
-            node->height = node->right->height + 1;
-        }
+Node *removeMax(Node *node) {
+    if (node->right == nullptr)
+        return node->left;
+    node->right = removeMax(node->right);
+    return balance(node);
+}
+
+
+Node *remove(Node *node, int data) {
+    if (!node)
+        return nullptr;
+    if (data < node->data)
+        node->left = remove(node->left, data);
+    else if (data > node->data)
+        node->right = remove(node->right, data);
+    else {
+        Node *left = node->left;
+        Node *right = node->right;
+        delete node;
+        if (!left)
+            return right;
+        Node *max = find_max(left);
+        max->left = removeMax(left);
+        max->right = right;
+        return balance(max);
     }
-}
-
-void print(Node *node) {
-    if (!node)
-        return;
-    printf("%d ", node->data);
-    if (node->left)
-        printf("%d ", node->left->index);
-    else
-        printf("0 ");
-    if (node->right)
-        printf("%d\n", node->right->index);
-    else
-        printf("0\n");
-    print(node->left);
-    print(node->right);
+    return balance(node);
 }
 
 bool exist(Node *node, int x) {
@@ -145,32 +134,25 @@ bool exist(Node *node, int x) {
 int main() {
     int n;
     std::cin >> n;
-    Node array[n];
-    int left, right;
+
+    Node *node = nullptr;
+    char command;
+    int x;
+
     for (int i = 0; i < n; ++i) {
-        std::cin >> array[i].data;
-        std::cin >> left;
-        std::cin >> right;
-        if (left)
-            array[i].left = &array[left - 1];
-        if (right)
-            array[i].right = &array[right - 1];
-    }
-    int value;
-    std::cin >> value;
-    if (n == 0)
-        printf("1\n%d 0 0", value);
-    else {
-        Node *node;
-        node = array;
-        set_height(node);
-        if (!exist(node, value)) {
-            node = insert(node, value);
-            n++;
+        std::cin >> command;
+        std::cin >> x;
+        if (command == 'A') {
+            node = insert(node, x);
+            std::cout << height(node->right) - height(node->left) << '\n';
+        } else if (command == 'D') {
+            node = remove(node, x);
+            std::cout << height(node->right) - height(node->left) << '\n';
+        } else if(command == 'C') {
+            if (exist(node, x))
+                std::cout << "Y\n";
+            else
+                std::cout << "N\n";
         }
-        printf("%d\n", n);
-        int index = 1;
-        set_index(node, index);
-        print(node);
     }
 }
