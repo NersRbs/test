@@ -79,7 +79,9 @@ Node *balance(Node *node) {
 Node *insert(Node *node, int data) {
     if (!node)
         return new Node(data);
-    if (data < node->data)
+    if(data == node->data)
+        return node;
+    else if (data < node->data)
         node->left = insert(node->left, data);
     else
         node->right = insert(node->right, data);
@@ -144,10 +146,16 @@ int main() {
         std::cin >> x;
         if (command == 'A') {
             node = insert(node, x);
-            std::cout << height(node->right) - height(node->left) << '\n';
+            if(node)
+                std::cout << height(node->right) - height(node->left) << '\n';
+            else
+                std::cout << "0\n";
         } else if (command == 'D') {
             node = remove(node, x);
-            std::cout << height(node->right) - height(node->left) << '\n';
+            if(node)
+                std::cout << height(node->right) - height(node->left) << '\n';
+            else
+                std::cout << "0\n";
         } else if(command == 'C') {
             if (exist(node, x))
                 std::cout << "Y\n";
