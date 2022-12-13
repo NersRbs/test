@@ -79,18 +79,6 @@ Node *balance(Node *node) {
     return node;
 }
 
-bool exist(Node *node, int x) {
-    if (node == nullptr)
-        return false;
-    else if (x < node->data)
-        return exist(node->left, x);
-    else if (x > node->data)
-        return exist(node->right, x);
-    else
-        return true;
-
-}
-
 Node *insert(Node *node, int data) {
     if (!node)
         return new Node(data);
@@ -110,6 +98,22 @@ void set_index(Node *node, int &index) {
     set_index(node->right, index);
 }
 
+void set_height(Node *node) {
+    if (node->left != nullptr && node->right != nullptr) {
+        set_height(node->left);
+        set_height(node->right);
+        node->height = std::max(node->left->height, node->right->height) + 1;
+    } else {
+        if (node->left != nullptr) {
+            set_height(node->left);
+            node->height = node->left->height + 1;
+        } else if (node->right != nullptr) {
+            set_height(node->right);
+            node->height = node->right->height + 1;
+        }
+    }
+}
+
 void print(Node *node) {
     if (!node)
         return;
@@ -126,26 +130,47 @@ void print(Node *node) {
     print(node->right);
 }
 
+bool exist(Node *node, int x) {
+    if (node == nullptr)
+        return false;
+    else if (x < node->data)
+        return exist(node->left, x);
+    else if (x > node->data)
+        return exist(node->right, x);
+    else
+        return true;
+
+}
+
 int main() {
     int n;
     std::cin >> n;
-    Node *node;
-    int left, right, data;
+    Node array[n];
+    int left, right;
     for (int i = 0; i < n; ++i) {
-        std::cin >> data;
+        std::cin >> array[i].data;
         std::cin >> left;
         std::cin >> right;
-        if (!exist(node, data))
-            node = insert(node, data);
+        if (left)
+            array[i].left = &array[left - 1];
+        if (right)
+            array[i].right = &array[right - 1];
     }
-    std::cin >> data;
-    if (!exist(node, data)) {
-        node = insert(node, data);
-        n++;
+    int value;
+    std::cin >> value;
+    if (n == 0)
+        printf("1\n%d 0 0", value);
+    else {
+        Node *node;
+        node = array;
+        set_height(node);
+        if (!exist(node, value)) {
+            node = insert(node, value);
+            n++;
+        }
+        printf("%d\n", n);
+        int index = 1;
+        set_index(node, index);
+        print(node);
     }
-
-    printf("%d\n", n);
-    int index = 1;
-    set_index(node, index);
-    print(node);
 }
