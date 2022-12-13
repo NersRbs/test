@@ -19,18 +19,24 @@ struct Node {
 
 
 int height(Node *node) {
-    if (node == nullptr)
-        return 0;
-    else
+    if (node)
         return node->height;
+    return 0;
 }
+
+void fixNodeHeight(Node *node) {
+    int leftHeight = height(node->left);
+    int rightHeight = height(node->right);
+    node->height = (leftHeight > rightHeight ? leftHeight : rightHeight) + 1;
+}
+
 
 Node *LeftRotate(Node *x) {
     Node *y = x->right;
     x->right = y->left;
     y->left = x;
-    x->height = std::max(height(x->left), height(x->right)) + 1;
-    y->height = std::max(height(x->right), x->height) + 1;
+    fixNodeHeight(x);
+    fixNodeHeight(y);
     return y;
 }
 
@@ -38,8 +44,8 @@ Node *RightRotate(Node *x) {
     Node *y = x->left;
     x->left = y->right;
     y->right = x;
-    x->height = std::max(height(x->left), height(x->right)) + 1;
-    y->height = std::max(height(x->left), x->height) + 1;
+    fixNodeHeight(x);
+    fixNodeHeight(y);
     return y;
 }
 
@@ -53,41 +59,34 @@ Node *BigRightRotate(Node *node) {
     return RightRotate(node);
 }
 
-Node *insert(Node *node, int x) {
-    if (node == nullptr)
-        node = new Node(x);
-    else if (x < node->data) {
-        node->left = insert(node->left, x);
-        if (height(node->left) - height(node->right) == 2) {
-            if (x < node->left->data)
-                node = RightRotate(node);
-            else
-                node = BigRightRotate(node);
-        }
-    } else if (x > node->data) {
-        node->right = insert(node->right, x);
-        if (abs(height(node->left) - height(node->right)) == 2) {
-            if (x > node->right->data)
-                node = LeftRotate(node);
-            else
-                node = BigLeftRotate(node);
-        }
+int getBalanceFactor(Node *node) {
+    return height(node->right) - height(node->left);
+}
+
+Node *balance(Node *node) {
+    fixNodeHeight(node);
+    if (getBalanceFactor(node) == 2) {
+        if (getBalanceFactor(node->right) < 0)
+            node->right = RightRotate(node->right);
+        return LeftRotate(node);
     }
-    node->height = std::max(height(node->left), height((node->right))) + 1;
+
+    if (getBalanceFactor(node) == -2) {
+        if (getBalanceFactor(node->left) > 0)
+            node->left = LeftRotate(node->left);
+        return RightRotate(node);
+    }
     return node;
 }
 
-
-bool exist(Node *node, int x) {
-    if (node == nullptr)
-        return false;
-    else if (x < node->data)
-        return exist(node->left, x);
-    else if (x > node->data)
-        return exist(node->right, x);
+Node *insert(Node *node, int data) {
+    if (!node)
+        return new Node(data);
+    if (data < node->data)
+        node->left = insert(node->left, data);
     else
-        return true;
-
+        node->right = insert(node->right, data);
+    return balance(node);
 }
 
 void set_index(Node *node, int &index) {
@@ -97,6 +96,22 @@ void set_index(Node *node, int &index) {
     index++;
     set_index(node->left, index);
     set_index(node->right, index);
+}
+
+void set_height(Node *node) {
+    if (node->left != nullptr && node->right != nullptr) {
+        set_height(node->left);
+        set_height(node->right);
+        node->height = std::max(node->left->height, node->right->height) + 1;
+    } else {
+        if (node->left != nullptr) {
+            set_height(node->left);
+            node->height = node->left->height + 1;
+        } else if (node->right != nullptr) {
+            set_height(node->right);
+            node->height = node->right->height + 1;
+        }
+    }
 }
 
 void print(Node *node) {
@@ -115,6 +130,18 @@ void print(Node *node) {
     print(node->right);
 }
 
+bool exist(Node *node, int x) {
+    if (node == nullptr)
+        return false;
+    else if (x < node->data)
+        return exist(node->left, x);
+    else if (x > node->data)
+        return exist(node->right, x);
+    else
+        return true;
+
+}
+
 int main() {
     int n;
     std::cin >> n;
@@ -129,13 +156,14 @@ int main() {
         if (right)
             array[i].right = &array[right - 1];
     }
-    Node *node;
-    node = array;
     int value;
     std::cin >> value;
     if (n == 0)
         printf("1\n%d 0 0", value);
     else {
+        Node *node;
+        node = array;
+        set_height(node);
         if (!exist(node, value)) {
             node = insert(node, value);
             n++;
